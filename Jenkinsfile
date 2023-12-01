@@ -1,23 +1,25 @@
 pipeline {
-  agent any
-  tools { 
-        maven 'maven_3_5_2'  
+    agent any
+
+    //Definición de variables de entorno
+    environment {
+        PROJECT_DIR_NAME='DemoSnykPipeline'
+        REPO_URL='https://github.com/CyriakCode/DevSecOps-SAST'
+        REPO_REPORTES_USER='kbriones'
+        REPO_REPORTES_URL='dev.azure.com/kbriones/NTTDATA%20CLOUD%20SECURITY/_git/ReportesHimeji'
+        SONAR_HOST_URL='http://44.216.31.35:9000'
     }
-   stages{
-    stage('Run Sonar Analysis') {
-            steps {	
-		sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=franksast -Dsonar.organization=franksast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=ce3caf6f60b599b72a6ced8a5fc17e060b1d87ee'
-		//sh 'mvn clean compile sonar:sonar -Dsonar.projectKey=franksast -Dsonar.organization=franksast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=ce3caf6f60b599b72a6ced8a5fc17e060b1d87ee'
-			}
+    
+    tools {
+        maven 'maven_3_5_2'
+    }
+    stages {
+        stage ('Run SCA Scan') {
+            steps {
+                withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
+                    sh 'mvn snyk:test -fn'
+                }
+            }
         }
-    stage('Run SCA Analysis using Snyk') {
-            steps {		
-			withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
-			    sh 'mvn snyk:test -fn'
-				}
-			}
-    }	
-
-
-  }
+    }
 }
